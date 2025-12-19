@@ -61,14 +61,14 @@ module.exports = (app,db) => {
      * @param {integer} user_id.path.required - user id to delete (Broken Function Level)
      * @return {array<User>} 200 - success response - application/json
      */
-         app.delete('/v1/user/:id', (req,res) =>{
-            db.user.destroy({where: { id : req.params.id}})
-                .then(user => {
-                    res.json({result: "deleted"});
-                })
-                .catch(e =>{
-                    res.json({error:e})
-                });
+        app.delete('/v1/user/:id', (req,res) =>{
+            const token = req.headers.authorization?.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        if (decoded.role !== 'admin' && decoded.id != req.params.id) {
+         return res.status(403).json({ error: 'Access denied' });
+        }
+
         });
     /**
      * POST /v1/user/

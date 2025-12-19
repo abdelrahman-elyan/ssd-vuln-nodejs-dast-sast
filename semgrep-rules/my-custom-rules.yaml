@@ -1,0 +1,32 @@
+rules:
+  - id: custom-sql-injection
+    languages: [javascript]
+    message: "Potential SQL Injection via string concatenation"
+    severity: ERROR
+    patterns:
+      - pattern-either:
+          - pattern: "$DB.query($SQL)"
+          - pattern: "$DB.sequelize.query($SQL)"
+          - pattern: |
+              "$STR" + $VAR
+
+  - id: ssti-nunjucks
+    languages: [javascript]
+    message: "Server Side Template Injection detected in Nunjucks"
+    severity: ERROR
+    pattern: "nunjucks.renderString($X)"
+
+  - id: command-injection
+    languages: [javascript]
+    message: "OS Command Injection detected (exec/execSync)"
+    severity: ERROR
+    patterns:
+      - pattern-either:
+        - pattern: "execSync($X)"
+        - pattern: "child_process.exec($X)"
+
+  - id: insecure-jwt-decode
+    languages: [javascript]
+    message: "JWT decoded without verification (Security Risk)"
+    severity: ERROR
+    pattern: "jwt.decode($X)"
