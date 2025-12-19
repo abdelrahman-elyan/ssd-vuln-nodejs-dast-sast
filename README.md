@@ -1,140 +1,153 @@
-# A vulnerable Express.js + Node.js API and Frontend
-### 
+# Secure Software Development Project
+## DAST + SAST on Vulnerable Node.js Express Application
 
-# Warning
-This application is not intended for production. It was heavily influenced by real life code.
+This repository contains a full Secure Software Development (SSD) project that demonstrates:
+- **Dynamic Application Security Testing (DAST)** using OWASP ZAP & Postman.
+- **Static Application Security Testing (SAST)** using Semgrep (Standard & Custom Rules).
+- **Secure Code Remediation** (Patching vulnerabilities).
+- **Re-testing and Validation** to ensure fixes work.
 
-USE WITH CAUTION
+The target application is a deliberately vulnerable Node.js + Express app used **only for educational and lab purposes**.
 
-## Quick Start with docker
+---
 
-1. Install Docker
-2. Run docker `pull sirappsec/nodejs-vulnerable-app`
-Run `docker run --rm -p 5000:5000 sirappsec/nodejs-vulnerable-app`
-3. Browse to http://localhost:3000 (on macOS and Windows browse to http://192.168.99.100:3000 if you are using docker-machine instead of the native docker installation)
+## 📌 Project Scope
+- **Course:** Secure Software Development
+- **Program:** Cybersecurity
+- **Semester:** Fall 2025
+- **Student:** Abdelrahman Elyan
+- **Tools:** OWASP ZAP, Postman, Semgrep, VS Code
+- **Environment:** Localhost (No real systems were tested)
 
-## Quick Start with npm
-```bash
-git clone https://github.com/SirAppSec/vuln-node.js-express.js-app.git
+---
+
+## 🛠 Technologies Used
+- **Backend:** Node.js / Express
+- **Database:** MySQL / Sequelize (SQLite for lab)
+- **DAST Tools:** OWASP ZAP, Postman
+- **SAST Tools:** Semgrep (CLI)
+- **Version Control:** Git & GitHub
+
+---
+
+## 🚀 Installation & Run
+
+### 1. Clone the repository
+~~~bash
+git clone https://github.com/abdelrahman-elyan/ssd-vuln-nodejs-dast-sast.git
 cd vuln-node.js-express.js-app
+~~~
+
+### 2. Install dependencies
+~~~bash
 npm install
-npm install nodemon
-npm run dev
+~~~
 
-```
-# Purpose
-1. Test your skills, try to pentest and find the vulnerabilities
-2. Use to Asses DAST/SAST tools for Node.js/Express.js applications
-3. Learn how not to write code
+### 3. Environment variables
+Create a `.env` file in the root directory based on `.env.example`:
+~~~ini
+JWT_SECRET=SuperSecretKey123
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=root
+DB_NAME=vulnapp
+PORT=5000
+~~~
 
-# Advantages over NodeGoat
-While NodeGoat cover mostly OWASP Top 10(inc SSRF and ReDos). This project have more vulnerabilities, multiple exploit chains and other weaknesses like low hanging fruits that are commonly found in production and enterprise level applications.
+### 4. Run the application
+~~~bash
+npm start
+~~~
+The application will be available at:  
+👉 **http://localhost:5000**
 
-# Vulnerabilities/Weaknesses
-* Sql injection
-* Business Logic
-* XXE - XML External Entity
-* RCE - Remote Code Execution
-* Session Fixation
-* Improper Password Strength Controls
-* Hard Coded Secrets
-* Insufficient Randomness
-* Path Traversal
-* Privileged Interface Exposure
-* Leftover Debug Code
-* Authentication Credentials In URL
-* Insecure OTP/2FA/MFA
-* Vertical Privilege escalation
-* Horizontal Privilege escalation
-* Insecure Object Deserialization
-* CSRF - Cross Site Request Forgery
-* SSRF - Server Side Request Forgery)
-* Click Jacking / Lack of Security Headers
-* Insecure Redirect
-* Vulnerable and Outdated Components (Probably, lol)
-* Forced Browsing
-* Password Hash With Insufficient Computational Effort
-* Excessive data exposure
-* PII Leak - Personal Identifiable Information Exposure
-* BOLA - Broken Object Level Authorization
-* Broken user Authentication
-* Mass Assignment
-* User Enumeration
-* Improper Asset management 
-* Broken Function Level
-* IDOR - Insecure Direct Object References
-* DOS - Denial of Service
-* ReDoS - Regular Expression Denial Of Service
-* Insufficient Logging & Monitoring 
-* Insecure JWT Implementation
-* Uverified JWT manipulation
-* JWT Secret Key Brute Force
-* Template injection (SSTI)
-* Reflected+ Stored XSS - Cross Site Scripting
+---
 
-## Todo
-* Insecure TLS Validation 
-* Arbitrary file writes
-* Type Confusion
-* Prototype pollution
-* Log injection
-* Host header poisoning
-* Encryption vulnerabilities
-* Trust boundary violations
-* Web Socket Security
-* NoSQL Injection
-* JSON Hijacking
+## 🧪 Phase A – DAST (Dynamic Testing)
 
-# How to Start
-`docker-compose up`
-or nativaly
-`npm run dev`
+In this phase, we performed black-box testing to identify runtime vulnerabilities.
 
-# Docs
-The swagger docs clearly state the type of vulnerability/exploitation method
-As expected, only some methods require authentication/authorization, mostly for the sake of brevity, although the most common (IMO) auth vulnerabilities are present in the application.
-<img width="832" alt="image" src="https://user-images.githubusercontent.com/89794666/182978736-72471ed2-eaf6-41e2-8af4-9122ea21db4e.png">
-<img width="1024" alt="image" src="https://user-images.githubusercontent.com/89794666/182978784-677e3f7c-ba57-4683-b7cd-523f68a7ec28.png">
+### Tools Used
+- **OWASP ZAP:** Automated scanning and spidering.
+- **Postman:** Manual exploitation and Proof of Concept (PoC) creation.
 
+### Vulnerabilities Discovered
+| ID | Vulnerability | OWASP Category | Impact |
+|----|--------------|----------------|--------|
+| **V1** | Privilege Escalation | A01: Broken Access Control | Admin takeover |
+| **V2** | IDOR | A01: Broken Access Control | Unauthorized data access |
+| **V3** | SQL Injection | A03: Injection | Data leakage (Credentials) |
+| **V4** | Command Injection (RCE) | A03: Injection | Remote Code Execution |
+| **V5** | SSTI | A03: Injection | Server-side code execution |
+| **V6** | Reflected XSS | A03: Injection | Client-side attacks |
+| **V7** | SSRF | A10: Server-Side Request Forgery | Internal network scanning |
+| **V8** | Path Traversal | A05: Security Misconfiguration | Sensitive file disclosure |
+| **V9** | Open Redirect | A05: Security Misconfiguration | Phishing attacks |
+| **V10** | Insecure JWT | A02: Cryptographic Failures | Authentication bypass |
 
-Access the api from http://localhost:5000/api-docs
+> *Full PoCs and screenshots are documented in `Security_Project_Report.pdf`.*
 
-# Easter Eggs
-Try to find deleted passwords and files in the repository.
+---
 
-You can also try to look for logic that breaks the application.
+## 🔍 Phase B – SAST (Semgrep)
 
+In this phase, we analyzed the source code to find the root causes of the vulnerabilities found in Phase A.
 
-# License
-This repository is free to use as is without any limitations
+### 1. Built-in Rules Scan
+We used Semgrep's official rulesets for an initial assessment:
+~~~bash
+semgrep --config "p/javascript" --config "p/nodejs" --error
+~~~
 
-the lorem impsum theme is free from https://themewagon.com/themes/free-responsive-bootstrap-5-html5-admin-template-sneat/
+### 2. Custom Rules (The Core Work)
+To detect specific vulnerable patterns in this application, we wrote custom YAML rules stored in the `semgrep-rules/` folder.
 
-# Refs
-https://owasp.org/www-project-api-security/
-https://www.shiftleft.io/blog/node.js-vulnerability-cheatsheet/
-https://snyk.io/blog/remediate-javascript-type-confusion-bypassed-input-validation/
-https://github.com/snoopysecurity/dvws-node/wiki
-https://medium.com/@chaudharyaditya/insecure-deserialization-3035c6b5766e
-https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
-https://hackernoon.com/secure-sessions-in-javascript-forking-express-session-to-improve-security-s62c35mk
-https://github.com/expressjs/session/issues/158
-https://javascript.plainenglish.io/create-otp-based-user-sign-up-using-node-js-cc4defc54123
-https://jwt.io/
-https://www.bezkoder.com/node-js-jwt-authentication-mysql/
-https://stackoverflow.com/questions/5823722/how-to-serve-an-image-using-nodejs
-https://expressjs.com/en/4x/api.html
-https://www.synack.com/blog/a-deep-dive-into-xxe-injection/
-https://www.exploit-db.com/docs/english/41397-injecting-sqlite-database-based-applications.pdf
-https://brikev.github.io/express-jsdoc-swagger-docs/#/README
-https://app-sec.gitbook.io/application-security/node.js-+-express.js-security-best-practices
+**Command:**
+~~~bash
+semgrep --config semgrep-rules/ .
+~~~
 
-# Academic References
-This repository has been referenced in the academic research paper:
+**Custom Rules Coverage:**
+- ✅ **SQL Injection:** Detects string concatenation in `sequelize.query`.
+- ✅ **SSTI:** Detects unsafe `nunjucks.renderString`.
+- ✅ **Command Injection:** Detects user input passed to `execSync`.
+- ✅ **Insecure JWT:** Detects `jwt.decode` usage without verification.
 
-Title: DeepCode AI Fix: Fixing Security Vulnerabilities with Large Language Models
-Authors: Berabi, et al.
-Published on: arXiv, February 2024
-https://arxiv.org/pdf/2402.13291v1
+---
 
-The paper explores the use of Large Language Models to automatically detect and fix security vulnerabilities. Our project is cited as a case study in demonstrating real-world examples of vulnerable applications and their mitigations.
+## 🔧 Phase C – Fix & Harden
+
+We implemented secure coding practices to mitigate the identified risks.
+
+### Remediation Strategies
+1. **SQL Injection:**
+   - **Fix:** Replaced string concatenation with **Sequelize Parameterized Queries** (Replacements).
+   - *Status:* ✅ Fixed.
+
+2. **Command Injection (RCE):**
+   - **Fix:** Removed `execSync` entirely and replaced functionality with safe APIs or strict validation.
+   - *Status:* ✅ Fixed.
+
+3. **Open Redirect:**
+   - **Fix:** Implemented an **Allowlist** (White-list) for trusted domains only.
+   - *Status:* ✅ Fixed.
+
+4. **SSTI:**
+   - **Fix:** Validated input before passing it to the template engine.
+   - *Status:* ✅ Fixed.
+
+5. **Path Traversal:**
+   - **Fix:** Used `path.basename()` to strip directory traversal characters (`../`).
+   - *Status:* ✅ Fixed.
+
+### Validation
+- **Re-testing:** Rerunning Postman payloads resulted in `403 Forbidden` or sanitized output.
+- **Semgrep Check:** Custom rules no longer flag the fixed code segments.
+
+---
+
+## 📄 Documentation
+For a detailed technical walkthrough, including screenshots, code snippets, and analysis, please refer to the **Security_Project_Report.pdf** included in this repository.
+
+---
+*Created for Secure Software Development Course - Fall 2025*
