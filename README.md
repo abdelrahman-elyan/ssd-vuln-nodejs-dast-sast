@@ -144,10 +144,3 @@ We implemented secure coding practices to mitigate the identified risks.
 - **Re-testing:** Rerunning Postman payloads resulted in `403 Forbidden` or sanitized output.
 - **Semgrep Check:** Custom rules no longer flag the fixed code segments.
 
----
-
-## 📄 Documentation
-For a detailed technical walkthrough, including screenshots, code snippets, and analysis, please refer to the **Security_Project_Report.pdf** included in this repository.
-
----
-*Created for Secure Software Development Course - Fall 2025*
